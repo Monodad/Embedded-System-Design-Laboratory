@@ -1163,13 +1163,18 @@ void Read_Bmp_file(char filename[32])
       // BSP_LCD_DisplayStringAt(10, 150, (uint8_t *)buffer, CENTER_MODE);
       // HAL_Delay(1000);
       uint32_t drawing_x = 0, drawing_y = 0;
+      uint32_t padding_size = (4 - width * 3 % 4) % 4;
       /* Read bitmap width */
       while (read_num <= size)
       {
-
         f_read(&file, color_buffer, sizeof(color_buffer), &fnum);
-        if (drawing_x == (width) + (width == 471))
+        if (drawing_x == (width))
         {
+          if (padding_size > 0)
+          {
+            uint8_t padding[padding_size];
+            f_read(&file, color_buffer, sizeof(color_buffer), &fnum);
+          }
           drawing_x = 0;
           drawing_y++;
           if (drawing_y == screen_height || drawing_y == height)
@@ -1178,8 +1183,14 @@ void Read_Bmp_file(char filename[32])
             break;
           }
         }
-
-        BSP_LCD_DrawPixel(drawing_x, screen_height - drawing_y, (color_buffer[0] | (color_buffer[1] << 8) | (color_buffer[2] << 16) | (0xFF) << 24));
+        if (drawing_x - width <= padding_size)
+        {
+          BSP_LCD_DrawPixel(drawing_x, screen_height - drawing_y, (color_buffer[0] | (color_buffer[1] << 8) | (color_buffer[2] << 16) | (0xFF) << 24));
+        }
+        else
+        {
+          BSP_LCD_DrawPixel(drawing_x, screen_height - drawing_y, (color_buffer[0] | (color_buffer[1] << 8) | (color_buffer[2] << 16) | (0xFF) << 24));
+        }
         drawing_x++;
         read_num = read_num + 1;
       }
